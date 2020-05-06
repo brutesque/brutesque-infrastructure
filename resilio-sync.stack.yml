@@ -8,11 +8,6 @@ services:
     ports:
       - target: 55555
         published: 55555
-        protocol: tcp
-        mode: host
-      - target: 55555
-        published: 55555
-        protocol: udp
         mode: host
     volumes:
       - sync_storage:/mnt/sync/storage      # Sync storage folder
@@ -80,11 +75,11 @@ services:
 
 configs:
   sync_config:
-    file: ./secrets/sync.conf
+    file: ./configs/sync.conf
 
 secrets:
   sync_license:
-    file: ./secrets/Sync_Pro_52606.btskey
+    file: ./secrets/Sync_Pro_License.btskey
 
 volumes:
   sync_storage:

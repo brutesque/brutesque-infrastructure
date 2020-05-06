@@ -43,16 +43,12 @@
         attachable: yes
       run_once: true
 
-    - file:
-        path: /opt/stacks/configs
-        state: directory
+    - file: state=directory path=/opt/stacks/configs
+    - file: state=directory path=/opt/stacks/secrets
+
     - copy:
         src: configs/02-lan.conf
         dest: /opt/stacks/configs/02-lan.conf
-
-    - file:
-        path: /opt/stacks/secrets
-        state: directory
     - copy:
         src: secrets/lan.list
         dest: /opt/stacks/secrets/lan.list
@@ -73,13 +69,8 @@
 - name: Deploy vpn
   hosts: manager01
   tasks:
-    - file:
-        path: /opt/stacks
-        state: directory
+    - file: state=directory path=/opt/stacks/secrets
 
-    - file:
-        path: /opt/stacks/secrets
-        state: directory
     - copy:
         src: secrets/vpn.env
         dest: /opt/stacks/secrets/vpn.env
@@ -126,22 +117,16 @@
         admin_password_hash: "{{ admin_password | password_hash('sha512', rounds=999999, salt=admin_password_salt) }}"
       run_once: true
 
-    - file:
-        path: /opt/stacks/secrets
-        state: directory
+    - file: state=directory path=/opt/stacks/configs
+    - file: state=directory path=/opt/stacks/secrets
+    - file: state=directory path=/mnt/storage/sync
+
     - copy:
         src: secrets/Sync_Pro_License.btskey
         dest: /opt/stacks/secrets/Sync_Pro_License.btskey
-    - file:
-        path: /opt/stacks/configs
-        state: directory
     - template:
         src: configs/sync.conf.j2
         dest: /opt/stacks/configs/sync.conf
-
-    - file:
-        path: /mnt/storage/sync
-        state: directory
 
     - copy:
         src: resilio-sync.stack.yml

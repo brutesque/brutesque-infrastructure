@@ -10,11 +10,6 @@ services:
     ports:
       - target: 53
         published: 53
-        protocol: tcp
-        mode: host
-      - target: 53
-        published: 53
-        protocol: udp
         mode: host
       - target: 67
         published: 67
