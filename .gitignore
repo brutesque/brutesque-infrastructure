@@ -6,4 +6,4 @@ venv
 
 # Secrets
 secrets/*
-!secrets/hosts.default
+!secrets/*.default

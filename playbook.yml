@@ -13,6 +13,63 @@
       run_once: true
   tags: labels
 
+- name: Deploy pihole
+  hosts: manager01
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+    - name: Disable the resolved service
+      systemd:
+        state: stopped
+        enabled: no
+        name: systemd-resolved
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
+
+    - name: update resolv.conf
+      lineinfile:
+        path: '/etc/resolv.conf'
+        state: present
+        regexp: '^nameserver '
+        line: 'nameserver 1.1.1.2'
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
+
+    - name: Create network to access the lan dns service
+      docker_network:
+        state: present
+        name: pihole-network
+        scope: swarm
+        driver: overlay
+        attachable: yes
+      run_once: true
+
+    - file:
+        path: /opt/stacks/configs
+        state: directory
+    - copy:
+        src: configs/02-lan.conf
+        dest: /opt/stacks/configs/02-lan.conf
+
+    - file:
+        path: /opt/stacks/secrets
+        state: directory
+    - copy:
+        src: secrets/lan.list
+        dest: /opt/stacks/secrets/lan.list
+
+    - copy:
+        src: pihole.stack.yml
+        dest: /opt/stacks/pihole.stack.yml
+    - docker_stack:
+        state: present
+        name: pihole
+        compose:
+          - /opt/stacks/pihole.stack.yml
+      environment:
+        DOMAIN: "apps.{{ domain }}"
+        WEBPASSWORD: "{{ admin_password }}"
+  tags: pihole
+
 - name: Deploy resilio-sync
   hosts: manager01
   vars_files:
