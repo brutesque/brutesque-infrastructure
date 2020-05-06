@@ -70,6 +70,28 @@
         WEBPASSWORD: "{{ admin_password }}"
   tags: pihole
 
+- name: Deploy vpn
+  hosts: manager01
+  tasks:
+    - file:
+        path: /opt/stacks
+        state: directory
+
+    - file:
+        path: /opt/stacks/secrets
+        state: directory
+    - copy:
+        src: secrets/vpn.env
+        dest: /opt/stacks/secrets/vpn.env
+
+    - copy:
+        src: vpn.compose.yml
+        dest: /opt/stacks/vpn.compose.yml
+    - shell:
+        cmd: docker-compose --project-name lan --file vpn.compose.yml up -d
+        chdir: /opt/stacks
+  tags: vpn
+
 - name: Deploy resilio-sync
   hosts: manager01
   vars_files:
