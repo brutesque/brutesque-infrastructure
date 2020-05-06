@@ -1,0 +1,9 @@
+# PyCharm
+.idea
+
+# Virtual Environment
+venv
+
+# Secrets
+secrets/*
+!secrets/hosts.default

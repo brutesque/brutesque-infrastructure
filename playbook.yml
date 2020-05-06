@@ -1,0 +1,77 @@
+---
+
+- name: Set swarm labels
+  hosts: manager01
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Add labels to nodes
+      docker_node:
+        hostname: "{{ hostvars[item]['ansible_hostname'] }}"
+        labels: "{{ hostvars[item]['swarm_labels'] |default({}) }}"
+      loop: "{{ ansible_play_batch }}"
+      run_once: true
+  tags: labels
+
+- name: Deploy resilio-sync
+  hosts: manager01
+  vars_files:
+    - vars/main.yml
+  tasks:
+
+    - name: Create an empty file to store the first deployment timestamp
+      copy:
+        content: ""
+        dest: "/opt/hello"
+        force: no
+    - name: Get the first deployment timestamp
+      shell: "stat --format '%Y' /opt/hello"
+      register: filetime_result
+      run_once: true
+    - name: Do ssh keyscan on ansible host
+      shell: "cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-keygen -l -f - | grep ED25519"
+      register: keyscan_result
+      until: keyscan_result.rc == 0
+      retries: 10
+      delay: 60
+      run_once: true
+    - name: Set fingerprint for ansible host
+      set_fact:
+        fingerprint: "{{ keyscan_result.stdout.split(' ')[1] }}"
+    - name: Create admin password hash for stack
+      set_fact:
+        admin_password_salt: "{{ ['resilio', fingerprint, filetime_result.stdout] | join('|') | hash('sha1') | truncate(16, True, '') }}"
+      run_once: true
+    - name: Create admin password hash for stack
+      set_fact:
+        admin_password_hash: "{{ admin_password | password_hash('sha512', rounds=999999, salt=admin_password_salt) }}"
+      run_once: true
+
+    - file:
+        path: /opt/stacks/secrets
+        state: directory
+    - copy:
+        src: secrets/Sync_Pro_License.btskey
+        dest: /opt/stacks/secrets/Sync_Pro_License.btskey
+    - file:
+        path: /opt/stacks/configs
+        state: directory
+    - template:
+        src: configs/sync.conf.j2
+        dest: /opt/stacks/configs/sync.conf
+
+    - file:
+        path: /mnt/storage/sync
+        state: directory
+
+    - copy:
+        src: resilio-sync.stack.yml
+        dest: /opt/stacks/resilio-sync.stack.yml
+    - docker_stack:
+        state: present
+        name: resilio
+        compose:
+          - /opt/stacks/resilio-sync.stack.yml
+      environment:
+        DOMAIN: "apps.{{ domain }}"
+  tags: resilio

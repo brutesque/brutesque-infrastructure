@@ -1,0 +1,3 @@
+---
+
+admin_password: "{{ lookup('env', 'ADMIN_PASSWORD') }}"
