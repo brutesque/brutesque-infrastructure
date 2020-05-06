@@ -1,0 +1,52 @@
+version: "3.7"
+services:
+  timemachine:
+    container_name: timemachine
+    hostname: timemachine
+    ports:
+      - target: 137
+        published: 137
+        protocol: udp
+        mode: host
+      - target: 138
+        published: 138
+        protocol: udp
+        mode: host
+      - target: 139
+        published: 139
+        mode: host
+      - target: 445
+        published: 445
+        mode: host
+    environment:
+      - CUSTOM_SMB_CONF=false
+      - CUSTOM_USER=false
+      - DEBUG_LEVEL=1
+      - HIDE_SHARES=no
+      - EXTERNAL_CONF=/users
+      - MIMIC_MODEL=TimeCapsule8,119
+      - SET_PERMISSIONS=false
+      - SMB_PORT=445
+      - WORKGROUP=WORKGROUP
+    volumes:
+      - ./configs/users:/users
+      - /mnt/storage/timemachine:/opt
+      - timemachine-var-lib-samba:/var/lib/samba
+      - timemachine-var-cache-samba:/var/cache/samba
+      - timemachine-run-samba:/run/samba
+    image: mbentley/timemachine:smb
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.timemachine == true
+
+volumes:
+  timemachine-var-lib-samba:
+  timemachine-var-cache-samba:
+  timemachine-run-samba:

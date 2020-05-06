@@ -154,3 +154,26 @@
       environment:
         DOMAIN: "apps.{{ domain }}"
   tags: resilio
+
+- name: Deploy timemachine
+  hosts: manager01
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - file: state=directory path=/opt/stacks/secrets
+    - file: state=directory path=/opt/stacks/configs/users
+    - file: state=directory path=/mnt/storage/timemachine
+
+    - template:
+        src: configs/timemachine-user.conf.j2
+        dest: "/opt/stacks/configs/users/{{ create_user }}.conf"
+    - copy:
+        src: timemachine.stack.yml
+        dest: /opt/stacks/timemachine.stack.yml
+
+    - docker_stack:
+        state: present
+        name: timemachine
+        compose:
+          - /opt/stacks/timemachine.stack.yml
+  tags: timemachine

@@ -1,3 +1,5 @@
 ---
 
 admin_password: "{{ lookup('env', 'ADMIN_PASSWORD') }}"
+create_user: "{{ lookup('env','USER') }}"
+user_password: "{{ lookup('env', 'USER_PASSWORD') }}"
