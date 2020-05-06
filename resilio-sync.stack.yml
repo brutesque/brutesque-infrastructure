@@ -1,0 +1,95 @@
+version: '3.7'
+
+services:
+
+  sync1:
+    image: resilio/sync
+    restart: always
+    ports:
+      - target: 55555
+        published: 55555
+        protocol: tcp
+        mode: host
+      - target: 55555
+        published: 55555
+        protocol: udp
+        mode: host
+    volumes:
+      - sync_storage:/mnt/sync/storage      # Sync storage folder
+      - /mnt/storage/sync:/mnt/sync/folders # folder with data to be shared
+    networks:
+      - traefik-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.resilio.node-nr == 1
+      labels:
+        - traefik.enable=true
+        - traefik.frontend.rule=Host:sync1.${DOMAIN?Variable DOMAIN not set}
+        - traefik.port=8888
+        - traefik.tags=traefik-public
+        - traefik.docker.network=traefik-public
+        - traefik.frontend.entryPoints=http,https
+        - traefik.frontend.redirect.entryPoint=https
+    configs:
+      - source: sync_config
+        target: /mnt/sync/sync.conf
+    secrets:
+      - source: sync_license
+        target: /mnt/sync/folders/license/Sync_Pro-license.btskey
+
+  sync2:
+    image: resilio/sync
+    restart: always
+    ports:
+      - target: 55555
+        published: 55555
+        protocol: tcp
+        mode: host
+      - target: 55555
+        published: 55555
+        protocol: udp
+        mode: host
+    volumes:
+      - sync_storage:/mnt/sync/storage      # Sync storage folder
+      - /mnt/storage/sync:/mnt/sync/folders # folder with data to be shared
+    networks:
+      - traefik-public
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.resilio.node-nr == 2
+      labels:
+        - traefik.enable=true
+        - traefik.frontend.rule=Host:sync2.${DOMAIN?Variable DOMAIN not set}
+        - traefik.port=8888
+        - traefik.tags=traefik-public
+        - traefik.docker.network=traefik-public
+        - traefik.frontend.entryPoints=http,https
+        - traefik.frontend.redirect.entryPoint=https
+    configs:
+      - source: sync_config
+        target: /mnt/sync/sync.conf
+    secrets:
+      - source: sync_license
+        target: /mnt/sync/folders/license/Sync_Pro-license.btskey
+
+configs:
+  sync_config:
+    file: ./secrets/sync.conf
+
+secrets:
+  sync_license:
+    file: ./secrets/Sync_Pro_52606.btskey
+
+volumes:
+  sync_storage:
+    driver: local
+
+networks:
+  traefik-public:
+    external: true

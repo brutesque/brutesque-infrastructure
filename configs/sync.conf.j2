@@ -1,0 +1,22 @@
+{
+    "listening_port" : 55555,
+    "storage_path" : "/mnt/sync/storage",
+    "use_upnp" : false,
+    "directory_root" : "/mnt/sync/folders/",
+    "directory_root_policy" : "belowroot",
+    "webui" :
+    {
+        "listen" : "0.0.0.0:8888"
+        ,"login" : "admin"
+        ,"password_hash" : "{{ admin_password_hash }}"
+        ,"allow_empty_password" : false
+        ,"dir_whitelist" : [ "/mnt/sync/folders" ]
+    },
+    "send_statistics" : false,
+    "sync_trash_ttl" : 1,
+    "folder_defaults.use_tracker" : true,
+    "folder_defaults.use_lan_broadcast" : false,
+    "folder_defaults.use_relay" : false,
+    "overwrite_changes" : true,
+    "sync_extended_attributes" : false
+}
