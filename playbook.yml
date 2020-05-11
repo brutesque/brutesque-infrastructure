@@ -1,11 +1,5 @@
 ---
 
-- hosts: managers
-  tasks:
-    - debug:
-        msg: "{{ hostvars[inventory_hostname]['ansible_' + wan_interface]['ipv4']['address'] }}"
-  tags: debug
-
 - name: Set swarm labels
   hosts: managers
   vars_files:
@@ -84,7 +78,7 @@
       environment:
         DOMAIN: "apps.{{ domain }}"
         WEBPASSWORD: "{{ admin_password }}"
-        SERVERIP: "{{ hostvars[inventory_hostname]['ansible_' + wan_interface]['ipv4']['address'] }}"
+        SERVERIP: "{{ hostvars[inventory_hostname]['ansible_' + lan_interface]['ipv4']['address'] }}"
         TIMEZONE: "Europe/Amsterdam"
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
   tags: pihole
