@@ -52,11 +52,18 @@
         attachable: yes
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
+    - file: state=directory path=/opt/stacks/pihole/configs
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
     - file: state=directory path=/opt/stacks/pihole/secrets
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
+
     - copy:
-        src: secrets/custom.list
-        dest: /opt/stacks/pihole/secrets/custom.list
+        src: configs/02-lan.conf
+        dest: /opt/stacks/pihole/configs/02-lan.conf
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
+    - copy:
+        src: secrets/lan.list
+        dest: /opt/stacks/pihole/secrets/lan.list
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
     - copy:
