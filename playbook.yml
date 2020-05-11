@@ -1,24 +1,33 @@
 ---
 
 - name: Set swarm labels
-  hosts: manager01
+  hosts: managers
   vars_files:
     - vars/main.yml
   tasks:
+    - name: Get info on all nodes
+      docker_node_info:
+      register: result
+      when: "'managers' in group_names"
+      run_once: true
+    - debug:
+        msg: "{{ result.nodes }}"
+      when: "'managers' in group_names"
+      run_once: true
     - name: Add labels to nodes
       docker_node:
-        hostname: "{{ hostvars[item]['ansible_hostname'] }}"
+        hostname: "{{ hostvars[item]['inventory_hostname'] }}"
         labels: "{{ hostvars[item]['swarm_labels'] |default({}) }}"
-      loop: "{{ ansible_play_batch }}"
+      loop: "{{ groups['nodes'] }}"
+      when: "'managers' in group_names"
       run_once: true
   tags: labels
 
 - name: Deploy pihole
-  hosts: manager01
+  hosts: managers
   vars_files:
     - vars/main.yml
   tasks:
-
     - name: Disable the resolved service
       systemd:
         state: stopped
@@ -41,50 +50,51 @@
         scope: swarm
         driver: overlay
         attachable: yes
-      run_once: true
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
-    - file: state=directory path=/opt/stacks/configs
-    - file: state=directory path=/opt/stacks/secrets
-
+    - file: state=directory path=/opt/stacks/pihole/secrets
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
     - copy:
-        src: configs/02-lan.conf
-        dest: /opt/stacks/configs/02-lan.conf
-    - copy:
-        src: secrets/lan.list
-        dest: /opt/stacks/secrets/lan.list
+        src: secrets/custom.list
+        dest: /opt/stacks/pihole/secrets/custom.list
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
     - copy:
         src: pihole.stack.yml
-        dest: /opt/stacks/pihole.stack.yml
+        dest: /opt/stacks/pihole/docker-compose.yml
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
     - docker_stack:
         state: present
         name: pihole
         compose:
-          - /opt/stacks/pihole.stack.yml
+          - /opt/stacks/pihole/docker-compose.yml
       environment:
         DOMAIN: "apps.{{ domain }}"
         WEBPASSWORD: "{{ admin_password }}"
+        SERVERIP: "192.168.9.30"
+        TIMEZONE: "Europe/Amsterdam"
+      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
   tags: pihole
 
 - name: Deploy vpn
-  hosts: manager01
+  hosts: managers
   tasks:
-    - file: state=directory path=/opt/stacks/secrets
+    - file: state=directory path=/opt/stacks/vpn/secrets
 
     - copy:
         src: secrets/vpn.env
-        dest: /opt/stacks/secrets/vpn.env
+        dest: /opt/stacks/vpn/secrets/vpn.env
 
     - copy:
         src: vpn.compose.yml
-        dest: /opt/stacks/vpn.compose.yml
+        dest: /opt/stacks/vpn/docker-compose.yml
     - shell:
-        cmd: docker-compose --project-name lan --file vpn.compose.yml up -d
-        chdir: /opt/stacks
+        cmd: docker-compose --project-name lan --file docker-compose.yml up -d
+        chdir: /opt/stacks/vpn
   tags: vpn
 
 - name: Deploy resilio-sync
-  hosts: manager01
+  hosts: managers
   vars_files:
     - vars/main.yml
   tasks:
@@ -117,48 +127,48 @@
         admin_password_hash: "{{ admin_password | password_hash('sha512', rounds=999999, salt=admin_password_salt) }}"
       run_once: true
 
-    - file: state=directory path=/opt/stacks/configs
-    - file: state=directory path=/opt/stacks/secrets
+    - file: state=directory path=/opt/stacks/resilio/configs
+    - file: state=directory path=/opt/stacks/resilio/secrets
     - file: state=directory path=/mnt/storage/sync
 
     - copy:
         src: secrets/Sync_Pro_License.btskey
-        dest: /opt/stacks/secrets/Sync_Pro_License.btskey
+        dest: /opt/stacks/resilio/secrets/Sync_Pro_License.btskey
     - template:
         src: configs/sync.conf.j2
-        dest: /opt/stacks/configs/sync.conf
+        dest: /opt/stacks/resilio/configs/sync.conf
 
     - copy:
         src: resilio-sync.stack.yml
-        dest: /opt/stacks/resilio-sync.stack.yml
+        dest: /opt/stacks/resilio/docker-compose.yml
     - docker_stack:
         state: present
         name: resilio
         compose:
-          - /opt/stacks/resilio-sync.stack.yml
+          - /opt/stacks/resilio/docker-compose.yml
       environment:
         DOMAIN: "apps.{{ domain }}"
   tags: resilio
 
 - name: Deploy timemachine
-  hosts: manager01
+  hosts: managers
   vars_files:
     - vars/main.yml
   tasks:
-    - file: state=directory path=/opt/stacks/secrets
-    - file: state=directory path=/opt/stacks/configs/users
+    - file: state=directory path=/opt/stacks/timemachine/secrets
+    - file: state=directory path=/opt/stacks/timemachine/configs/users
     - file: state=directory path=/mnt/storage/timemachine
 
     - template:
         src: configs/timemachine-user.conf.j2
-        dest: "/opt/stacks/configs/users/{{ create_user }}.conf"
+        dest: "/opt/stacks/timemachine/configs/users/{{ create_user }}.conf"
     - copy:
         src: timemachine.stack.yml
-        dest: /opt/stacks/timemachine.stack.yml
+        dest: /opt/stacks/timemachine/docker-compose.yml
 
     - docker_stack:
         state: present
         name: timemachine
         compose:
-          - /opt/stacks/timemachine.stack.yml
+          - /opt/stacks/timemachine/docker-compose.yml
   tags: timemachine
