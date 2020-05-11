@@ -5,7 +5,7 @@ services:
   pihole:
     container_name: pihole
     domainname: ${DOMAIN}
-    image: pihole/pihole:latest
+    image: pihole/pihole:v4.4
     restart: always
     ports:
       - target: 53
