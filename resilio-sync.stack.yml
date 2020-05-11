@@ -3,11 +3,16 @@ version: '3.7'
 services:
 
   sync1:
-    image: resilio/sync
+    image: resilio/sync:2.7.0
     restart: always
     ports:
       - target: 55555
         published: 55555
+        protocol: tcp
+        mode: host
+      - target: 55555
+        published: 55555
+        protocol: udp
         mode: host
     volumes:
       - sync_storage:/mnt/sync/storage      # Sync storage folder
@@ -36,7 +41,7 @@ services:
         target: /mnt/sync/folders/license/Sync_Pro-license.btskey
 
   sync2:
-    image: resilio/sync
+    image: resilio/sync:2.7.0
     restart: always
     ports:
       - target: 55555

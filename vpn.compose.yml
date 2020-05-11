@@ -7,8 +7,14 @@ services:
     env_file:
       - ./secrets/vpn.env
     ports:
-      - "500:500/udp"
-      - "4500:4500/udp"
+      - target: 500
+        published: 500
+        protocol: udp
+        mode: host
+      - target: 4500
+        published: 4500
+        protocol: udp
+        mode: host
     privileged: true
     hostname: ipsec-vpn-server
     container_name: ipsec-vpn-server

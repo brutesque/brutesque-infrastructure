@@ -5,11 +5,16 @@ services:
   pihole:
     container_name: pihole
     domainname: ${DOMAIN}
-    image: pihole/pihole:v4.4_amd64
+    image: pihole/pihole:v4.4-amd64
     restart: always
     ports:
       - target: 53
         published: 53
+        protocol: tcp
+        mode: host
+      - target: 53
+        published: 53
+        protocol: udp
         mode: host
       - target: 67
         published: 67
