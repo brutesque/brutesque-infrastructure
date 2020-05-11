@@ -1,5 +1,11 @@
 ---
 
+- hosts: managers
+  tasks:
+    - debug:
+        msg: "{{ hostvars[inventory_hostname]['ansible_' + wan_interface]['ipv4']['address'] }}"
+  tags: debug
+
 - name: Set swarm labels
   hosts: managers
   vars_files:
@@ -43,7 +49,7 @@
         line: 'nameserver 1.1.1.2'
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
-    - name: Create network to access the lan dns service
+    - name: Create network for other services to access the lan dns service
       docker_network:
         state: present
         name: pihole-network
@@ -78,7 +84,7 @@
       environment:
         DOMAIN: "apps.{{ domain }}"
         WEBPASSWORD: "{{ admin_password }}"
-        SERVERIP: "192.168.9.30"
+        SERVERIP: "{{ hostvars[inventory_hostname]['ansible_' + wan_interface]['ipv4']['address'] }}"
         TIMEZONE: "Europe/Amsterdam"
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
   tags: pihole

@@ -31,9 +31,6 @@ services:
       VIRTUAL_PORT: 80
       DNSMASQ_LISTENING: all
       DNSSEC: "true"
-      CONDITIONAL_FORWARDING: "true"
-      CONDITIONAL_FORWARDING_IP: "192.168.9.1"
-      CONDITIONAL_FORWARDING_DOMAIN: "local"
     volumes:
       - pihole:/etc/pihole
       - dnsmasq:/etc/dnsmasq.d
