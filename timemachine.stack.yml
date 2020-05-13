@@ -1,4 +1,4 @@
-version: "3.7"
+version: "3.8"
 services:
   timemachine:
     container_name: timemachine
@@ -46,9 +46,10 @@ services:
       - timemachine-run-samba:/run/samba
     image: mbentley/timemachine:smb
     ulimits:
+      nproc: 65535
       nofile:
-        soft: 65536
-        hard: 65536
+        soft: 1048576
+        hard: 1048576
     deploy:
       mode: replicated
       replicas: 1

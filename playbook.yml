@@ -92,6 +92,30 @@
         chdir: /opt/stacks/vpn
   tags: vpn
 
+- name: Deploy timemachine
+  hosts: managers[0]
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - file: state=directory path=/opt/stacks/timemachine/secrets
+    - file: state=directory path=/opt/stacks/timemachine/configs/users
+    - file: state=directory path=/mnt/storage/timemachine
+
+    - template:
+        src: configs/timemachine-user.conf.j2
+        dest: "/opt/stacks/timemachine/configs/users/{{ create_user }}.conf"
+    - copy:
+        src: timemachine.stack.yml
+        dest: /opt/stacks/timemachine/docker-compose.yml
+
+    - docker_stack:
+        state: present
+        name: timemachine
+        compose:
+          - /opt/stacks/timemachine/docker-compose.yml
+  tags: timemachine
+
+
 - name: Deploy resilio-sync
   hosts: managers[0]
   vars_files:
@@ -145,25 +169,42 @@
         DOMAIN: "apps.{{ domain }}"
   tags: resilio
 
-- name: Deploy timemachine
-  hosts: managers[0]
+- name: Fix some common Resilio Sync issues
+  hosts: nodes
   vars_files:
     - vars/main.yml
   tasks:
-    - file: state=directory path=/opt/stacks/timemachine/secrets
-    - file: state=directory path=/opt/stacks/timemachine/configs/users
-    - file: state=directory path=/mnt/storage/timemachine
-
-    - template:
-        src: configs/timemachine-user.conf.j2
-        dest: "/opt/stacks/timemachine/configs/users/{{ create_user }}.conf"
-    - copy:
-        src: timemachine.stack.yml
-        dest: /opt/stacks/timemachine/docker-compose.yml
-
-    - docker_stack:
+    - name: Get StreamsList file of every sync folder
+      find:
+        path: /mnt/storage/sync
+        file_type: file
+        patterns: 'StreamsList'
+        recurse: true
+        depth: 3
+      register: files_matched
+      when: swarm_labels['resilio.node-nr']
+    - name: Comment out com.apple.ResourceFork for every sync folder
+      lineinfile:
+        path: "{{ item.path }}"
         state: present
-        name: timemachine
-        compose:
-          - /opt/stacks/timemachine/docker-compose.yml
-  tags: timemachine
+        regexp: '^com.apple.ResourceFork'
+        line: '#com.apple.ResourceFork'
+      loop: "{{ files_matched.files }}"
+      when: swarm_labels['resilio.node-nr']
+
+    - name: Make sure sync agent can have enough system notify watchers  # https://connect.resilio.com/hc/en-us/articles/360011329820
+      lineinfile:
+        path: '/etc/sysctl.conf'
+        state: present
+        regexp: '^fs.inotify.max_user_watches='
+        line: 'fs.inotify.max_user_watches=1048576'
+      when: swarm_labels['resilio.node-nr']
+    - name: Make sure sync agent can have enough system notify watchers  # https://connect.resilio.com/hc/en-us/articles/360011329820
+      shell:
+        cmd: 'sysctl fs.inotify.max_user_watches=1048576'
+      when: swarm_labels['resilio.node-nr']
+    - name: Make sure sync agent can have enough system notify watchers  # https://connect.resilio.com/hc/en-us/articles/360011329820
+      shell:
+        cmd: 'sysctl -p'
+      when: swarm_labels['resilio.node-nr']
+  tags: resilio
