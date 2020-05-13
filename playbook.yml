@@ -1,30 +1,22 @@
 ---
 
 - name: Set swarm labels
-  hosts: managers
+  hosts: managers[0]
   vars_files:
     - vars/main.yml
   tasks:
     - name: Get info on all nodes
       docker_node_info:
       register: result
-      when: "'managers' in group_names"
-      run_once: true
-    - debug:
-        msg: "{{ result.nodes }}"
-      when: "'managers' in group_names"
-      run_once: true
     - name: Add labels to nodes
       docker_node:
-        hostname: "{{ hostvars[item]['inventory_hostname'] }}"
-        labels: "{{ hostvars[item]['swarm_labels'] |default({}) }}"
-      loop: "{{ groups['nodes'] }}"
-      when: "'managers' in group_names"
-      run_once: true
+        hostname: "{{ item.Description.Hostname }}"
+        labels: "{{ hostvars[item.Description.Hostname]['swarm_labels'] |default({}) }}"
+      loop: "{{ result['nodes'] }}"
   tags: labels
 
 - name: Deploy pihole
-  hosts: managers
+  hosts: managers[0]
   vars_files:
     - vars/main.yml
   tasks:
@@ -84,7 +76,7 @@
   tags: pihole
 
 - name: Deploy vpn
-  hosts: managers
+  hosts: managers[0]
   tasks:
     - file: state=directory path=/opt/stacks/vpn/secrets
 
@@ -101,7 +93,7 @@
   tags: vpn
 
 - name: Deploy resilio-sync
-  hosts: managers
+  hosts: managers[0]
   vars_files:
     - vars/main.yml
   tasks:
@@ -114,25 +106,21 @@
     - name: Get the first deployment timestamp
       shell: "stat --format '%Y' /opt/hello"
       register: filetime_result
-      run_once: true
     - name: Do ssh keyscan on ansible host
       shell: "cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-keygen -l -f - | grep ED25519"
       register: keyscan_result
       until: keyscan_result.rc == 0
       retries: 10
       delay: 60
-      run_once: true
     - name: Set fingerprint for ansible host
       set_fact:
         fingerprint: "{{ keyscan_result.stdout.split(' ')[1] }}"
     - name: Create admin password hash for stack
       set_fact:
         admin_password_salt: "{{ ['resilio', fingerprint, filetime_result.stdout] | join('|') | hash('sha1') | truncate(16, True, '') }}"
-      run_once: true
     - name: Create admin password hash for stack
       set_fact:
         admin_password_hash: "{{ admin_password | password_hash('sha512', rounds=999999, salt=admin_password_salt) }}"
-      run_once: true
 
     - file: state=directory path=/opt/stacks/resilio/configs
     - file: state=directory path=/opt/stacks/resilio/secrets
@@ -158,7 +146,7 @@
   tags: resilio
 
 - name: Deploy timemachine
-  hosts: managers
+  hosts: managers[0]
   vars_files:
     - vars/main.yml
   tasks:
