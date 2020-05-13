@@ -5,7 +5,7 @@ services:
   pihole:
     container_name: pihole
     domainname: ${DOMAIN}
-    image: pihole/pihole:v4.4-amd64
+    image: pihole/pihole:v5.0
     restart: always
     ports:
       - target: 53
@@ -28,7 +28,6 @@ services:
       start_period: 40s
     environment:
       ServerIP: ${SERVERIP}
-      TZ: ${TIMEZONE}
       WEBPASSWORD: ${WEBPASSWORD}
       DNS1: 1.1.1.2
       DNS2: 1.0.0.2
@@ -39,6 +38,7 @@ services:
     volumes:
       - pihole:/etc/pihole
       - dnsmasq:/etc/dnsmasq.d
+      - ./secrets/custom.list:/etc/pihole/custom.list
     networks:
       - traefik-public
       - pihole-network
@@ -59,17 +59,6 @@ services:
         - traefik.docker.network=traefik-public
         - traefik.frontend.entryPoints=http,https
         - traefik.frontend.redirect.entryPoint=https
-    configs:
-      - source: pihole_lanlist
-        target: /etc/pihole/lan.list
-      - source: pihole_lanconf
-        target: /etc/dnsmasq.d/02-lan.conf
-
-configs:
-  pihole_lanlist:
-    file: ./secrets/lan.list
-  pihole_lanconf:
-    file: ./configs/02-lan.conf
 
 volumes:
   pihole:

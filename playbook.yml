@@ -50,12 +50,8 @@
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
     - copy:
-        src: configs/02-lan.conf
-        dest: /opt/stacks/pihole/configs/02-lan.conf
-      when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
-    - copy:
-        src: secrets/lan.list
-        dest: /opt/stacks/pihole/secrets/lan.list
+        src: secrets/custom.list
+        dest: /opt/stacks/pihole/secrets/custom.list
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
 
     - copy:
@@ -71,7 +67,6 @@
         DOMAIN: "apps.{{ domain }}"
         WEBPASSWORD: "{{ admin_password }}"
         SERVERIP: "{{ hostvars[inventory_hostname]['ansible_' + lan_interface]['ipv4']['address'] }}"
-        TIMEZONE: "Europe/Amsterdam"
       when: swarm_labels['lan-dns'] is defined and swarm_labels['lan-dns'] == 'true'
   tags: pihole
 
