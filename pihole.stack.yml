@@ -51,6 +51,13 @@ services:
       placement:
         constraints:
           - node.labels.lan-dns == True
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.2'
+          memory: 64M
       labels:
         - traefik.enable=true
         - traefik.frontend.rule=Host:pihole.${DOMAIN?Variable DOMAIN not set}

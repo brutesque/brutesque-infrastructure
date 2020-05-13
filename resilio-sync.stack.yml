@@ -30,6 +30,13 @@ services:
       placement:
         constraints:
           - node.labels.resilio.node-nr == 1
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 2048M
+        reservations:
+          cpus: '1.00'
+          memory: 1024M
       labels:
         - traefik.enable=true
         - traefik.frontend.rule=Host:sync1.${DOMAIN?Variable DOMAIN not set}
@@ -73,6 +80,13 @@ services:
       placement:
         constraints:
           - node.labels.resilio.node-nr == 2
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 2048M
+        reservations:
+          cpus: '1.00'
+          memory: 1024M
       labels:
         - traefik.enable=true
         - traefik.frontend.rule=Host:sync2.${DOMAIN?Variable DOMAIN not set}
