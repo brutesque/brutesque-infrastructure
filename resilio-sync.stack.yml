@@ -3,6 +3,7 @@ version: '3.8'
 services:
 
   sync1:
+    hostname: sync1
     image: resilio/sync:2.7.0
     restart: always
     ports:
@@ -32,11 +33,11 @@ services:
           - node.labels.resilio.node-nr == 1
       resources:
         limits:
-          cpus: '2.00'
-          memory: 2048M
+          cpus: '4.00'
+          memory: 4096M
         reservations:
           cpus: '1.00'
-          memory: 1024M
+          memory: 2048M
       labels:
         - traefik.enable=true
         - traefik.frontend.rule=Host:sync1.${DOMAIN?Variable DOMAIN not set}
@@ -53,6 +54,7 @@ services:
         target: /mnt/sync/folders/license/Sync_Pro-license.btskey
 
   sync2:
+    hostname: sync2
     image: resilio/sync:2.7.0
     restart: always
     ports:
@@ -83,10 +85,10 @@ services:
       resources:
         limits:
           cpus: '2.00'
-          memory: 2048M
+          memory: 3072M
         reservations:
           cpus: '1.00'
-          memory: 1024M
+          memory: 2048M
       labels:
         - traefik.enable=true
         - traefik.frontend.rule=Host:sync2.${DOMAIN?Variable DOMAIN not set}
