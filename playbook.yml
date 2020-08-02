@@ -15,6 +15,20 @@
       loop: "{{ result['nodes'] }}"
   tags: labels
 
+- name: Mount the BigStorage disk
+  hosts: storage
+  become: true
+  tasks:
+    - name: Mount big storage device
+      mount:
+        path: "/mnt/storage"
+        src: "/dev/{{ storage_device }}"
+        fstype: xfs
+        opts: defaults
+        state: present
+      when: storage_device is defined
+  tags: storage
+
 - name: Deploy pihole
   hosts: managers[0]
   vars_files:
