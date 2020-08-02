@@ -136,7 +136,7 @@
         fingerprint: "{{ keyscan_result.stdout.split(' ')[1] }}"
     - name: Create admin password hash for stack
       set_fact:
-        admin_password_salt: "{{ ['resilio', fingerprint, filetime_result.stdout] | join('|') | hash('sha1') | truncate(16, True, '') }}"
+        admin_password_salt: "{{ ['resilio', fingerprint, filetime_result.stdout] | join('|') | hash('sha1') | truncate(15, True, '') + '.' }}"
     - name: Create admin password hash for stack
       set_fact:
         admin_password_hash: "{{ admin_password | password_hash('sha512', rounds=999999, salt=admin_password_salt) }}"
