@@ -29,7 +29,7 @@
       when: storage_device is defined
   tags: storage
 
-- name: Deploy registry
+- name: Deploy private registry
   hosts: managers[0]
   vars_files:
     - vars/main.yml
@@ -51,6 +51,29 @@
         DOMAIN: "apps.{{ domain }}"
         REGISTRY_TITLE: "{{ domain }}"
         REGISTRY_HTTP_SECRET: "{{ domain | hash('sha1') | truncate(10, True, '') }}"
+  tags: registry
+
+- name: Log into private registry and force re-authorization
+  hosts: swarm
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: wait for registry to come up
+      uri:
+        validate_certs: no
+        method: GET
+        url: "https://registry.apps.{{ domain }}"
+        status_code: 401
+      register: result
+      until: result.status == 401
+      retries: 60
+      delay: 5
+    - name: login to registry
+      docker_login:
+        registry: "registry.apps.{{ domain }}"
+        username: "admin"
+        password: "{{ admin_password }}"
+      changed_when: false
   tags: registry
 
 - name: Deploy pihole
