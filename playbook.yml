@@ -226,7 +226,7 @@
   tags: resilio
 
 - name: Fix some common Resilio Sync issues
-  hosts: nodes
+  hosts: swarm
   vars_files:
     - vars/main.yml
   tasks:
