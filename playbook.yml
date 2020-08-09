@@ -13,6 +13,7 @@
         hostname: "{{ item.Description.Hostname }}"
         labels: "{{ hostvars[item.Description.Hostname]['swarm_labels'] |default({}) }}"
       loop: "{{ result['nodes'] }}"
+      no_log: true
   tags: labels
 
 - name: Mount the BigStorage disk
