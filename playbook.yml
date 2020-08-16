@@ -69,6 +69,7 @@
       until: result.status == 401
       retries: 60
       delay: 5
+      run_once: true
     - name: login to registry
       docker_login:
         registry: "registry.apps.{{ domain }}"
@@ -171,7 +172,6 @@
         compose:
           - /opt/stacks/timemachine/docker-compose.yml
   tags: timemachine
-
 
 - name: Deploy resilio-sync
   hosts: managers[0]
