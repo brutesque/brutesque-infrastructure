@@ -26,7 +26,7 @@
         src: "/dev/{{ storage_device }}"
         fstype: xfs
         opts: defaults
-        state: present
+        state: mounted
       when: storage_device is defined
   tags: storage
 
