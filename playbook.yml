@@ -30,30 +30,6 @@
       when: storage_device is defined
   tags: storage
 
-- name: Deploy private registry
-  hosts: managers[0]
-  vars_files:
-    - vars/main.yml
-  tasks:
-    - file:
-        state: directory
-        path: /opt/stacks/registry
-        mode: '0600'
-    - copy:
-        src: registry.stack.yml
-        dest: /opt/stacks/registry/docker-compose.yml
-        mode: '0600'
-    - docker_stack:
-        state: present
-        name: registry
-        compose:
-          - /opt/stacks/registry/docker-compose.yml
-      environment:
-        DOMAIN: "apps.{{ domain }}"
-        REGISTRY_TITLE: "{{ domain }}"
-        REGISTRY_HTTP_SECRET: "{{ domain | hash('sha1') | truncate(10, True, '') }}"
-  tags: registry
-
 - name: Log into private registry and force re-authorization
   hosts: swarm
   vars_files:
