@@ -6,4 +6,4 @@ venv
 
 # Secrets
 secrets/*
-!secrets/*.default
+!secrets/*.example
